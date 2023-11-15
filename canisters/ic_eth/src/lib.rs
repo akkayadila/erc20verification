@@ -15,6 +15,7 @@ mod util;
 thread_local! {
     static ERC_721: Rc<Contract> = Rc::new(include_abi!("../abi/erc721.json"));
     static ERC_1155: Rc<Contract> = Rc::new(include_abi!("../abi/erc1155.json"));
+    static ERC_20: Rc<Contract> = Rc::new(include_abi!("../abi/erc20.json")); //added ERC20 ABI 
 }
 
 /// Verify an ECDSA signature (message signed by an Ethereum wallet).
@@ -73,6 +74,34 @@ pub async fn erc1155_balance_of(
         &[
             Token::Address(owner_address.into()),
             Token::Uint(token_id.into()),
+        ],
+    )
+    .await;
+    match result.get(0) {
+        Some(Token::Uint(n)) => n.as_u128(),
+        _ => panic!("Unexpected result"),
+    }
+}
+
+/// Find the balance of an ERC-20 token by calling the Ethereum blockchain.
+#[ic_cdk_macros::update]
+#[candid_method]
+pub async fn erc20_balance_of(
+    network: String,
+    contract_address: String,
+    owner_address: String
+) -> u128 {
+    let owner_address =
+        ethers_core::types::Address::from_str(&owner_address).expect("Invalid owner address");
+
+    let abi = &ERC_20.with(Rc::clone);
+    let result = call_contract(
+        &network,
+        contract_address,
+        abi,
+        "balanceOf",
+        &[
+            Token::Address(owner_address.into()),
         ],
     )
     .await;

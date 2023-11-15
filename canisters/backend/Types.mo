@@ -28,27 +28,30 @@ module {
     public type SignedPrincipal = Text;
   };
 
-  public module Nft {
-    public type Nft = {
+  public module Token { //public module Nft
+    public type Token = { //public type Nft
       owner : Address.Address;
       contract : Address.Address;
       tokenType : TokenType;
-      tokenId : Nat;
+      tokenId : ?Nat; //made tokenId optional
       network : Text;
     };
     public type TokenType = {
       #erc721;
       #erc1155;
+      #erc20; //added ERC-20 as token type
     };
     public module Id {
-      public type Id = {
+public type Id = {
         contract : Address.Address;
-        tokenId : Nat;
+        tokenId : ?Nat; //Nat
         network : Text;
       };
-      public func fromNft(n : Nft) : Id { n };
+      public func fromNft(n : Token) : Id { n }; //public func fromNft(n : Nft) : Id { n };
+
       public func hash(n : Id) : Hash.Hash {
-        Text.hash(n.network # "/" # n.contract # "/" # Nat.toText(n.tokenId));
+        //Text.hash(n.network # "/" # n.contract # "/" # Nat.toText(n.tokenId));
+        Text.hash(n.network # "/" # n.contract # "/" # (switch (n.tokenId) {case(null) {""}; case(?tokenId) {Nat.toText(tokenId)}}));
       };
       public func equal(n1 : Id, n2 : Id) : Bool {
         n1 == n2;
@@ -83,7 +86,7 @@ module {
   public type AddNftEvent = {
     principal : Principal;
     wallet : EthWallet;
-    nft : Nft.Nft;
+    nft : Token.Token; //nft.nft
     time : System.Time;
   };
 
